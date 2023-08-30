@@ -1,4 +1,6 @@
 package com.learnkafka.domain;
 
-public record LibraryEventType() {
+public enum LibraryEventType {
+    NEW,
+    UPDATE
 }
