@@ -24,6 +24,7 @@ public class LibraryEventsController {
     public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody LibraryEvent libraryEvent) throws JsonProcessingException {
         log.info("libraryEvent :: {} ", libraryEvent);
         libraryEventsProducer.sendLibraryEvent(libraryEvent);
+        log.info("After sending library event to Kafka");
         return ResponseEntity.status(HttpStatus.CREATED).body(libraryEvent);
     }
 
