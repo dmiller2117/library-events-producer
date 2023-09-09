@@ -9,6 +9,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 @Component
 @Slf4j
 public class LibraryEventsProducer {
@@ -24,6 +28,13 @@ public class LibraryEventsProducer {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Send a library event asynchronously.
+     * The preferred approach.
+     *
+     * @param libraryEvent the library event
+     * @throws JsonProcessingException
+     */
     public void sendLibraryEvent(LibraryEvent libraryEvent) throws JsonProcessingException {
         var key = libraryEvent.libraryEventId();
         var value = objectMapper.writeValueAsString(libraryEvent);
@@ -38,6 +49,25 @@ public class LibraryEventsProducer {
                 handleSuccess(key, value, sendResult);
             }
         });
+    }
+
+    /**
+     * Send a library event synchronously.
+     *
+     * @param libraryEvent the library event
+     * @throws JsonProcessingException
+     */
+    public SendResult<Integer, String> sendLibraryEvent_approach2(LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException, TimeoutException {
+        var key = libraryEvent.libraryEventId();
+        var value = objectMapper.writeValueAsString(libraryEvent);
+
+        // 1. blocking call - get metadata about the kafka cluster
+        // 2. block and wait until the message is sent to the Kafka queue,
+        var sendResult = kafkaTemplate.send(topic, key, value)
+                // .get()
+                .get(3, TimeUnit.SECONDS);
+        handleSuccess(key, value, sendResult);
+        return sendResult;
     }
 
     private void handleSuccess(Integer key, String value, SendResult<Integer, String> sendResult) {
