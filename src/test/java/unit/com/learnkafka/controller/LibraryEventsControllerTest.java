@@ -12,7 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +37,18 @@ class LibraryEventsControllerUnitTest {
                 .andExpect(status().isCreated());
 
         verify(libraryEventsProducer).sendLibraryEvent_approach3(isA(LibraryEvent.class));
+        verifyNoMoreInteractions(libraryEventsProducer);
+    }
+
+    @Test
+    void postLibraryEventInvalidValues() throws Exception {
+        var json = objectMapper.writeValueAsString(TestUtil.libraryEventRecordWithInvalidBook().libraryEventType());
+
+        mockMvc.perform(post("/v1/libraryevent")
+                        .content(json)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError());
+
         verifyNoMoreInteractions(libraryEventsProducer);
     }
 
